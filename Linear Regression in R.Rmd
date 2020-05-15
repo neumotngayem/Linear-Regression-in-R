@@ -1,0 +1,150 @@
+---
+title: "Linear Regression in R"
+output:
+  html_document:
+    df_print: paged
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(DataExplorer)
+library(fastDummies)
+library(caTools)
+library(Metrics)
+```
+## Fish Weight Prediction
+
+This dataset is a record of 7 common different fish species in fish market sales. With this dataset, a predictive model can be performed using machine friendly data and estimate the weight of fish can be predicted.
+
+<h3>1. Data Exploration</h3>
+First input and see the structure of the dataset:
+```{r}
+data_fish <-  read.csv("Fish.csv")
+names(data_fish)[1] = "Species"
+str(data_fish)
+```
+To do the linear regression in this dataset, the Species feature need to convert to dummy variables. Structure after dummy:
+```{r}
+data_fish = dummy_cols(data_fish)
+data_fish = data_fish[,-1]
+str(data_fish)
+```
+<h3>2. Missing values</h3>
+```{r}
+plot_missing(data_fish)
+```
+</br>It is good that, the dataset is not have missing values.
+<h3>3. Correlation</h3>
+```{r}
+plot_correlation(data_fish)
+```
+</br>From the plot, it show that the Length 1, Length 2, Length 3, Height and Width feature have a high correlation on the Weight feature
+<h3>4. Stratified sampling</h3>
+The sampling will divide the dataset so that 70% instanses of the dataset will go for training and 30% will go for validating
+```{r, echo=FALSE}
+set.seed(123)
+split <- sample.split(data_fish$Weight, SplitRatio = 0.7)
+training_set = subset(data_fish, split == TRUE)
+test_set = subset(data_fish, split == FALSE)
+```
+```{r}
+str(training_set)
+str(test_set)
+```
+<h3>5. Linear Regression Model</h3>
+```{r}
+regressor = lm(formula = Weight ~ .,
+               data = training_set)
+summary(regressor)
+plot(regressor)
+```
+</br>The Residuals vs Fitted Plot show a slight parabola indicate that relationship between predictor variables and target variable (weight) maybe is slight non-linear relationship. 
+</br>The QQ Plot show that the errors is almost normally distributed. 
+</br>The Scale-Location Plot show that the residuals are spread equally along the range of predcitor.
+</br>Residuals vs Leverage Plot show that there is no outlier that influent the regression result.
+<h3>5. Predicting Result</h3>
+```{r}
+pred_test <- predict(regressor, test_set)
+combine_table <- cbind(pred_test,test_set$Weight)
+colnames(combine_table) <- c("Prediction Weight", "Real Weight")
+combine_table
+```
+```{r, echo=TRUE}
+pred_train = predict(regressor, training_set)
+rmse_train <- sqrt(mean((training_set$Weight-pred_train)^2))
+rmse_test <- sqrt(mean((test_set$Weight-pred_test)^2))
+
+rss_train <- sum((training_set$Weight-pred_train)^2)
+rss_test <- sum((test_set$Weight-pred_test)^2)
+
+tss_train <- sum((training_set$Weight - mean(training_set$Weight)) ^ 2)
+tss_test <- sum((test_set$Weight - mean(test_set$Weight)) ^ 2)
+
+r_square_train <- 1-(rss_train/tss_train)
+r_square_test <- 1-(rss_test/tss_test)
+```
+RMSE, RSS and R&#178; on the training set and test set:
+<table class="table table-bordered" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="2">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+RMSE
+</div>
+</th>
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="2">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+RSS
+</div>
+</th>
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center;" colspan="2">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+R&#178;
+</div>
+</th>
+</tr>
+<tr>
+<th style="text-align:right;">
+On training set
+</th>
+<th style="text-align:right;">
+On test set
+</th>
+<th style="text-align:right;">
+On training set
+</th>
+<th style="text-align:right;">
+On test set
+</th>
+<th style="text-align:right;">
+On training set
+</th>
+<th style="text-align:right;">
+On test set
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+85.85008
+</td>
+<td style="text-align:right;">
+104.2211
+</td>
+<td style="text-align:right;">
+818096.2
+</td>
+<td style="text-align:right;">
+521377.6
+</td>
+<td style="text-align:right;">
+0.9448807
+</td>
+<td style="text-align:right;">
+0.9010514
+</td>
+</tr>
+</tbody>
+</table>
+<h3>6. Conclusion</h3>
+The R&#178; is reached at 0.9010514, which is a good figure as it very near 1 - the maximum value of R&#178;. It show that the predicted values is highly accurate even the The Residuals vs Fitted Plot shows the slight non-linear relationship between the predictor variables and target variable.
