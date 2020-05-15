@@ -1,1 +1,1 @@
-This is a implemented of Naive Bayes model in R to predict the wine quality.
+This is a implemented of Linear Regression model in R to predict the fish weight.
