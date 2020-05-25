@@ -1,1 +1,1 @@
-This is a implemented of Linear Regression model in R to predict the fish weight.
+This is a implemented of Linear Regression models in R to predict the fish weight.
